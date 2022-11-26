@@ -4,33 +4,35 @@ using UnityEngine;
 
 public class PlayerMovement : MonoBehaviour
 {
-    // Start is called before the first frame update
     
+    [SerializeField] private LayerMask jumpableGround;
+    [SerializeField] private float moveSpeed = 7f; 
+    [SerializeField] private float jumpForce = 5f; 
+   
     private Rigidbody2D rb;
     private Animator anim;
     private SpriteRenderer spr;
     private BoxCollider2D coll;
-    [SerializeField] private LayerMask jumpableGround;
-    [SerializeField] private float moveSpeed = 7f; 
-    [SerializeField] private float jumpForce = 5f; 
-    //[SerializeField] private TrailRenderer tr;
-
-    public AudioSource source;
-    public AudioClip clip;
+    public AudioSource source1;
+    public AudioClip clip1;
+    public AudioSource source2;
+    public AudioClip clip2;
     public ParticleSystem dust;
     public ParticleSystem jumpDust;
+    public ParticleSystem dashDust;
     private ParticleSystem.EmissionModule dustEmission;
     public ParticleSystem impactEffect;
+
     private bool isGrounded;
     private bool Attack; 
     private bool wasOnGround;
+    private bool isDashing;
+    private bool doubleJump;
+    private bool isFacingRight = true;
+    private bool canDash = true;
     private float horizontal;
     private float speed = 6f;
     private float jumpingPower = 6f;
-    private bool isFacingRight = true;
-    private bool doubleJump;
-    private bool canDash = true;
-    private bool isDashing;
     private float dashingPower = 12f;
     private float dashingTime = 0.2f;
     private float dashingCooldown = 1f;
@@ -45,9 +47,10 @@ public class PlayerMovement : MonoBehaviour
         coll = GetComponent<BoxCollider2D>();
         spr = GetComponent<SpriteRenderer>();
         Attack = false;
-        source = GetComponent<AudioSource>();
-        clip = GetComponent<AudioClip>();
+        source1 = GetComponent<AudioSource>();
+        clip1 = GetComponent<AudioClip>();
         
+        dashDust.Stop();
 
         dustEmission = dust.emission;
 
@@ -60,7 +63,7 @@ public class PlayerMovement : MonoBehaviour
         {
             doubleJump = false;
         }
-         
+
         horizontal = Input.GetAxisRaw("Horizontal");
 
          if (Input.GetButtonDown("Jump"))
@@ -69,9 +72,7 @@ public class PlayerMovement : MonoBehaviour
             if (IsGrounded() || doubleJump)
             {
                 rb.velocity = new Vector2(rb.velocity.x, jumpingPower);
-
                 doubleJump = !doubleJump;
-
                 jumpDust.Play();
             }
         }
@@ -93,20 +94,20 @@ public class PlayerMovement : MonoBehaviour
          if (rb.velocity.x > 0f && IsGrounded())
         {
           
-            source.enabled = true;
+            source1.enabled = true;
 
         }
 
         else if (rb.velocity.x < 0 && IsGrounded()) 
         {
             
-            source.enabled = true;
+            source1.enabled = true;
 
         }
 
         else 
         {
-            source.enabled = false;
+            source1.enabled = false;
         }
         
 
@@ -126,6 +127,7 @@ public class PlayerMovement : MonoBehaviour
         {
             StartCoroutine(Dash());
         }
+
    }
     
         private void FixedUpdate()
@@ -195,9 +197,9 @@ public class PlayerMovement : MonoBehaviour
         float originalGravity = rb.gravityScale;
         rb.gravityScale = 0f;
         rb.velocity = new Vector2(transform.localScale.x * dashingPower, 0f);
-        //tr.emitting = true;
+        dashDust.Play();
         yield return new WaitForSeconds(dashingTime);
-        //tr.emitting = false;
+        dashDust.Stop();
         rb.gravityScale = originalGravity;
         isDashing = false;
         yield return new WaitForSeconds(dashingCooldown);
