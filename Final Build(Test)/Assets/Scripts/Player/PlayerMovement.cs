@@ -5,33 +5,36 @@ using UnityEngine;
 public class PlayerMovement : MonoBehaviour
 {
     // Start is called before the first frame update
-
+    
     private Rigidbody2D rb;
     private Animator anim;
     private SpriteRenderer spr;
     private BoxCollider2D coll;
     [SerializeField] private LayerMask jumpableGround;
-    [SerializeField] private LayerMask jumpableWall;
-    public int extraJumps;
-
-    private float dirX;
     [SerializeField] private float moveSpeed = 7f; 
-    public float jumpForce = 16f; 
-    private bool Attack; 
+    [SerializeField] private float jumpForce = 5f; 
+    //[SerializeField] private TrailRenderer tr;
+
     public AudioSource source;
     public AudioClip clip;
     public ParticleSystem dust;
     public ParticleSystem jumpDust;
     private ParticleSystem.EmissionModule dustEmission;
     public ParticleSystem impactEffect;
+    private bool isGrounded;
+    private bool Attack; 
     private bool wasOnGround;
+    private float horizontal;
+    private float speed = 6f;
+    private float jumpingPower = 6f;
+    private bool isFacingRight = true;
+    private bool doubleJump;
+    private bool canDash = true;
+    private bool isDashing;
+    private float dashingPower = 12f;
+    private float dashingTime = 0.2f;
+    private float dashingCooldown = 1f;
 
-    public float dashSpeed;
-    private float dashTime;
-    public float startDashTime;
-    private int direction;
-
-    
     private enum MovementState {idle, running, jummping, falling, attack}
 
      private void Start()
@@ -44,38 +47,38 @@ public class PlayerMovement : MonoBehaviour
         Attack = false;
         source = GetComponent<AudioSource>();
         clip = GetComponent<AudioClip>();
+        
 
         dustEmission = dust.emission;
 
     }
 
     // Update is called once per frame
-    private void Update(){ 
-
-         if(IsGrounded() == true)
-        {
-            extraJumps = 1;
-        }
+    private void Update(){
         
-         dirX = Input.GetAxis("Horizontal");        
-
-        rb.velocity = new Vector2(dirX * moveSpeed, rb.velocity.y);
-        
-        if (Input.GetButtonDown("Jump") && extraJumps > 0 && rb.velocity.y < 2)
+        if (IsGrounded() && !Input.GetButton("Jump"))
         {
-        rb.velocity = new Vector2 (rb.velocity.x, jumpForce);
-        jumpDust.Play();
-        extraJumps--;
-
-        if(extraJumps > 1)
-        {
-            jumpForce = 14f;
+            doubleJump = false;
         }
-        else
+         
+        horizontal = Input.GetAxisRaw("Horizontal");
+
+         if (Input.GetButtonDown("Jump"))
         {
-            jumpForce = 7f;
+
+            if (IsGrounded() || doubleJump)
+            {
+                rb.velocity = new Vector2(rb.velocity.x, jumpingPower);
+
+                doubleJump = !doubleJump;
+
+                jumpDust.Play();
+            }
         }
 
+        if (Input.GetButtonUp("Jump") && rb.velocity.y > 0f)
+        {
+            rb.velocity = new Vector2(rb.velocity.x, rb.velocity.y * 0.5f);
         }
         
         if (Input.GetKeyDown("x"))
@@ -87,14 +90,14 @@ public class PlayerMovement : MonoBehaviour
             Attack = false;
         }
 
-         if (dirX > 0f && IsGrounded())
+         if (rb.velocity.x > 0f && IsGrounded())
         {
           
             source.enabled = true;
 
         }
 
-        else if (dirX < 0 && IsGrounded()) 
+        else if (rb.velocity.x < 0 && IsGrounded()) 
         {
             
             source.enabled = true;
@@ -108,6 +111,8 @@ public class PlayerMovement : MonoBehaviour
         
 
         UpdateAnimationState();
+        
+        Flip();
 
           if(Input.GetAxisRaw("Horizontal") != 0 && IsGrounded())
        {
@@ -116,24 +121,47 @@ public class PlayerMovement : MonoBehaviour
        {
            dustEmission.rateOverTime = 0f; 
        }
+
+        if (Input.GetKeyDown(KeyCode.LeftShift) && canDash)
+        {
+            StartCoroutine(Dash());
+        }
    }
     
+        private void FixedUpdate()
+    {
+        if (isDashing)
+        {
+            return;
+        }
+        
+        rb.velocity = new Vector2(horizontal * speed, rb.velocity.y);
 
+    }
+
+    private void Flip()
+    {
+        if (isFacingRight && horizontal < 0f || !isFacingRight && horizontal > 0f)
+        {
+            Vector3 localScale = transform.localScale;
+            isFacingRight = !isFacingRight;
+            localScale.x *= -1f;
+            transform.localScale = localScale;
+        }
+    }
     private void UpdateAnimationState()
         {
 
             MovementState state;
 
-        if (dirX > 0f)
+        if (rb.velocity.x > 0f)
         {
             state = MovementState.running;
-            spr.flipX = false;
         }
 
-        else if (dirX < 0) 
+        else if (rb.velocity.x < 0) 
         {
             state = MovementState.running;            
-            spr.flipX = true;
         }
 
         else 
@@ -150,18 +178,30 @@ public class PlayerMovement : MonoBehaviour
         {
             state = MovementState.falling;
         }
+        
 
         anim.SetInteger("state", (int)state);
-
+        
     }
     private bool IsGrounded()
     {
         return Physics2D.BoxCast(coll.bounds.center, coll.bounds.size, 0f, Vector2.down, .1f, jumpableGround);
     }
 
-    private bool IsWalled()
+     private IEnumerator Dash()
     {
-        return Physics2D.BoxCast(coll.bounds.center, coll.bounds.size, 0f, new Vector2(transform.localScale.x - 1, 0), .1f, jumpableWall);
+        canDash = false;
+        isDashing = true;
+        float originalGravity = rb.gravityScale;
+        rb.gravityScale = 0f;
+        rb.velocity = new Vector2(transform.localScale.x * dashingPower, 0f);
+        //tr.emitting = true;
+        yield return new WaitForSeconds(dashingTime);
+        //tr.emitting = false;
+        rb.gravityScale = originalGravity;
+        isDashing = false;
+        yield return new WaitForSeconds(dashingCooldown);
+        canDash = true;
     }
 }
 
