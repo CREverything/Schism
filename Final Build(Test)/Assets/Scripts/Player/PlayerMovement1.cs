@@ -9,39 +9,6 @@ public class PlayerMovement1 : MonoBehaviour
     [SerializeField] private float _moveSpeed = 7f;
     [SerializeField] private float _jumpForce = 5f;
 
-    private Rigidbody2D rb;
-    private Animator anim;
-    private SpriteRenderer spr;
-    private BoxCollider2D coll;
-    public AudioSource source1;
-    public AudioClip clip1;
-    public AudioSource source2;
-    public AudioClip clip2;
-    public ParticleSystem dust;
-    public ParticleSystem jumpDust;
-    public ParticleSystem dashDust;
-    private ParticleSystem.EmissionModule dustEmission;
-    public ParticleSystem impactEffect;
-    public Ghost ghost;
-
-    private bool isGrounded;
-    private bool Attack;
-    private bool wasOnGround;
-    private bool isDashing;
-    private bool doubleJump;
-    private bool isFacingRight = true;
-    private bool canHorizontalDash = true;
-    private bool canVerticalDash = true;
-    private float horizontal;
-    private float speed = 6f;
-    private float jumpingPower = 6f;
-    private float dashDistanceX = 15f;
-    private float dashDistanceY = 6f;
-    private float doubleTapTime;
-    private float dashingTime = 0.2f;
-    private float dashingHorizontalCooldown = 1f;
-    private float dashingVerticalCooldown = 1f;
-
     private Rigidbody2D _rb;
     private Animator _animator;
     private SpriteRenderer _spr;
@@ -53,8 +20,7 @@ public class PlayerMovement1 : MonoBehaviour
     private bool _isDashing;
     private bool _doubleJump;
     private bool _isFacingRight = true;
-    private bool _canHorizontalDash = true;
-    private bool _canVerticalDash = true;
+    private bool _canDash = true;
     private float _horizontal;
     private float _speed = 6f;
     private float _jumpingPower = 6f;
@@ -72,7 +38,8 @@ public class PlayerMovement1 : MonoBehaviour
     public ParticleSystem Dust;
     public ParticleSystem JumpDust;
     public ParticleSystem DashDust;
-        KeyCode lastKeyCode;
+
+    KeyCode lastKeyCode;
 
     // Start is called before the first frame update.
     private void Start()
@@ -164,7 +131,7 @@ public class PlayerMovement1 : MonoBehaviour
     //Player dash calling.
 
         //Dashing left.
-       if (Input.GetKeyDown(KeyCode.A) && _canHorizontalDash)
+       if (Input.GetKeyDown(KeyCode.A) && _canDash)
        {
 
         if (_doubleTapTime > Time.time && lastKeyCode == KeyCode.A)
@@ -196,11 +163,9 @@ public class PlayerMovement1 : MonoBehaviour
         }
         lastKeyCode = KeyCode.D;
        }
-        //Dash Left
-        if (Input.GetKeyDown(KeyCode.LeftArrow) && _canHorizontalDash)
 
         //Dash left V2.
-        if (Input.GetKeyDown(KeyCode.LeftArrow) && _canHorizontalDash)
+        if (Input.GetKeyDown(KeyCode.LeftArrow) && _canDash)
         {
         if (_doubleTapTime > Time.time && lastKeyCode == KeyCode.LeftArrow)
         {
@@ -223,7 +188,7 @@ public class PlayerMovement1 : MonoBehaviour
        }
 
         //Dashing right V2.
-       if (Input.GetKeyDown(KeyCode.RightArrow) && _canHorizontalDash)
+       if (Input.GetKeyDown(KeyCode.RightArrow) && _canDash)
        {
         if (_doubleTapTime > Time.time && lastKeyCode == KeyCode.RightArrow)
         {
@@ -245,11 +210,13 @@ public class PlayerMovement1 : MonoBehaviour
         {
             StartCoroutine(DashVertical(1f));
         }
+
         else
         {
-            doubleTapTime = Time.time + 0.5f;
+            _doubleTapTime = Time.time + 0.5f;
         }
 
+        lastKeyCode = KeyCode.RightArrow;
        }
 
        //Dash Down
@@ -277,15 +244,12 @@ public class PlayerMovement1 : MonoBehaviour
     // Fixed update is called multiple times per frame.
         private void FixedUpdate()
     {
-        if (!isDashing || !isDashing){
-        rb.velocity = new Vector2(horizontal * speed, rb.velocity.y);
-        rb.gravityScale = 1f;
         if (!_isDashing)
         {
         _rb.velocity = new Vector2(_horizontal * _speed, _rb.velocity.y);
         _rb.gravityScale = 1f;
         }
-    }
+
     }
 
     // Flip player sprite based on directional orientation.
@@ -378,5 +342,3 @@ public class PlayerMovement1 : MonoBehaviour
         canVerticalDash = true;
     }
 }
-
-
