@@ -14,27 +14,7 @@ public class PlayerMovement1 : MonoBehaviour
     private SpriteRenderer _spr;
     private BoxCollider2D _coll;
     private ParticleSystem.EmissionModule _dustEmission;
-    private bool _isGrounded;
-    private bool _attack;
-    private bool _wasOnGround;
-    private bool _isVerticallyDashing;
-    private bool _isHorizontallyDashing;
-    private bool _doubleJump;
-    private bool _isFacingRight = true;
-    private bool _canHorizontalDash = true;
-    private bool _canVerticalDash = true;
-    private float _horizontal;
-    private float _speed = 6f;
-    private float _jumpingPower = 6f;
-    private float _dashDistanceX = 15f;
-    private float _dashDistanceY = 7f;
-    private float _doubleTapTime;
-    private float _dashingTimeV = 0.2f;
-    private float _dashingTimeH = 0.2f;
-    private float _dashingHorizontalCooldown = 1f;
-    private float _dashingVerticalCooldown = 1f;
-    private enum _movementState {idle, running, jummping, falling, attack}
-
+    private Vector2 _dashingDir;
     public ParticleSystem ImpactEffect;
     public AudioSource Source1;
     public AudioClip Clip1;
@@ -44,13 +24,27 @@ public class PlayerMovement1 : MonoBehaviour
     public ParticleSystem JumpDust;
     public ParticleSystem DashDust;
     public Ghost Ghost;
+    
+    private bool _isGrounded;
+    private bool _attack;
+    private bool _wasOnGround;
+    private bool _doubleJump;
+    private bool _isFacingRight = true;
+    private float _horizontal;
+    private float _speed = 6f;
+    private float _jumpingPower = 6f;
+    private bool _canDash = true;
+    private bool _isDashing;
+    private float _dashingPower = 12f;
+    private float _dashingTime = 0.2f;
+    private float _dashingCooldown = 1f;
 
     KeyCode lastKeyCode;
+    private enum _movementState {idle, running, jummping, falling, attack}
 
     // Start is called before the first frame update.
     private void Start()
     {
-        _jumpForce = 7f;
         _rb =  GetComponent<Rigidbody2D>();
         _animator =  GetComponent<Animator>();
         _coll = GetComponent<BoxCollider2D>();
@@ -65,6 +59,11 @@ public class PlayerMovement1 : MonoBehaviour
 
     // Update is called once per frame.
     private void Update(){
+
+        if (_isDashing)
+        {
+            return;
+        }
 
         // Set double jump to false if the player is not grounded.
         if (IsGrounded() && !Input.GetButton("Jump"))
@@ -132,38 +131,10 @@ public class PlayerMovement1 : MonoBehaviour
            _dustEmission.rateOverTime = 0f;
        }
 
-        //Dashing left.
-       if (Input.GetKeyDown(KeyCode.A) && _canHorizontalDash)
-       {
-
-        if (_doubleTapTime > Time.time && lastKeyCode == KeyCode.A)
-            {
-                StartCoroutine(DashHorizontal(-1f));
-            }
-            else
-            {
-                _doubleTapTime = Time.time + 0.5f;
-            }
-
-            lastKeyCode = KeyCode.A;
-       }
-
-       if (Input.GetKeyDown(KeyCode.D) && _canHorizontalDash)
-       {
-
-        if (_doubleTapTime > Time.time && lastKeyCode == KeyCode.D)
-            {
-                StartCoroutine(DashHorizontal(1f));
-            }
-            else
-            {
-                _doubleTapTime = Time.time + 0.5f;
-            }
-
-            lastKeyCode = KeyCode.D;
-       }
-        
-       
+         if (Input.GetKeyDown(KeyCode.LeftShift) && _canDash)
+        {
+            StartCoroutine(Dash());
+        }
 
         //Update player animations and flip the player sprite.
         UpdateAnimationState();
@@ -173,12 +144,12 @@ public class PlayerMovement1 : MonoBehaviour
     // Fixed update is called multiple times per frame.
         private void FixedUpdate()
     {
-        if (!_isVerticallyDashing || !_isHorizontallyDashing)
+        if (_isDashing)
         {
+            return;
+        }
         _rb.velocity = new Vector2(_horizontal * _speed, _rb.velocity.y);
         _rb.gravityScale = 1f;
-        }
-
     }
 
     // Flip player sprite based on directional orientation.
@@ -232,42 +203,21 @@ public class PlayerMovement1 : MonoBehaviour
         return Physics2D.BoxCast(_coll.bounds.center, _coll.bounds.size, 0f, Vector2.down, .1f, _jumpableGround);
     }
 
-    IEnumerator DashHorizontal (float directionX)
+   private IEnumerator Dash()
     {
-        _canHorizontalDash = false;
-        _isHorizontallyDashing = true;
-        _rb.velocity = new Vector2(_rb.velocity.x, 0f);
-        _rb.AddForce(new Vector2(_dashDistanceX * directionX, 0f), ForceMode2D.Impulse);
-        float gravity = _rb.gravityScale;
+        _canDash = false;
+        _isDashing = true;
+        float originalGravity = _rb.gravityScale;
         _rb.gravityScale = 0f;
+        _rb.velocity = new Vector2(transform.localScale.x * _dashingPower, 0f);
         DashDust.Play();
         Ghost.makeGhost = true;
-        yield return new WaitForSeconds(0.3f);
-        _isHorizontallyDashing = false;
-        _rb.gravityScale = gravity;
+        yield return new WaitForSeconds(_dashingTime);
+        _rb.gravityScale = originalGravity;
+        _isDashing = false;
         DashDust.Stop();
         Ghost.makeGhost = false;
-        yield return new WaitForSeconds(_dashingHorizontalCooldown);
-        _canHorizontalDash = true;
-    }
-
-    // Dash preferences.
-    IEnumerator DashVertical(float directionY)
-    {
-        _canVerticalDash = false;
-        _isVerticallyDashing = true;
-        _rb.velocity = new Vector2(0f, _rb.velocity.y);
-        _rb.AddForce(new Vector2(0f, _dashDistanceY * directionY), ForceMode2D.Impulse);
-        float gravity = _rb.gravityScale;
-        _rb.gravityScale = 0f;
-        DashDust.Play();
-        Ghost.makeGhost = true;
-        yield return new WaitForSeconds(0.3f);
-        _isVerticallyDashing = false;
-        _rb.gravityScale = gravity;
-        DashDust.Stop();
-        Ghost.makeGhost = false;
-        yield return new WaitForSeconds(_dashingVerticalCooldown);
-        _canVerticalDash = true;
+        yield return new WaitForSeconds(_dashingCooldown);
+        _canDash = true;
     }
 }
