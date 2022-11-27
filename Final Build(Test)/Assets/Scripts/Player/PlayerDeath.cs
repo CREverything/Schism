@@ -5,22 +5,20 @@ using UnityEngine.SceneManagement;
 
 public class PlayerDeath : MonoBehaviour
 {
-    private Rigidbody2D rb;
-    private Animator anim;
+    private Rigidbody2D _rb;
+    private Animator _animator;
 
-    
+    public AudioSource Source;
+    public AudioClip Clip;
 
-    public AudioSource source;
-    public AudioClip clip;
-
+    // Start is called before the first frame update.
     private void Start()
     {
-        rb = GetComponent<Rigidbody2D>();
-        anim = GetComponent<Animator>();
-         
-
+        _rb = GetComponent<Rigidbody2D>();
+        _animator = GetComponent<Animator>();
     }
 
+    // Player collisions with obstacles.
     private void OnCollisionEnter2D(Collision2D collision)
     {
         if (collision.gameObject.CompareTag("Traps"))
@@ -29,13 +27,15 @@ public class PlayerDeath : MonoBehaviour
         }
     }
 
+    // Player death animation and restart.
     private void Die()
     {
-        source.PlayOneShot(clip);
-        rb.bodyType = RigidbodyType2D.Static;
+        Source.PlayOneShot(Clip);
+        _rb.bodyType = RigidbodyType2D.Static;
         RestartLevel();
     }
 
+    // Restart level functionality.
     public void RestartLevel()
     {
         SceneManager.LoadScene(SceneManager.GetActiveScene().name);

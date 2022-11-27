@@ -5,30 +5,28 @@ using UnityEngine;
 
 public class PlayerAttack : MonoBehaviour
 {
-    // Start is called before the first frame update
-   Animator anim;
-   public float delay = 0.3f;
-   private bool attackBlocked;
+   public float Delay = 0.3f;
 
+   private bool _attackBlocked;
+
+   Animator animator;
+
+    // Start is called before the first frame update
     void Start()
     {
-        anim = GetComponent<Animator>();
+        animator = GetComponent<Animator>();
     }
 
-    // Update is called once per frame
-    void Update()
-    {
-
-    }
+    // Player attack.
      public void Attack()
     {   
         if(Input.GetKeyDown("x"))
         {
-            anim.SetTrigger("Attack");
+            animator.SetTrigger("Attack");
         }
         else 
         {
-            anim.SetTrigger("NotAttack");
+            animator.SetTrigger("NotAttack");
         }
        
 }
