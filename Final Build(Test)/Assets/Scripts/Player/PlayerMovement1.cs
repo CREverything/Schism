@@ -17,17 +17,22 @@ public class PlayerMovement1 : MonoBehaviour
     private bool _isGrounded;
     private bool _attack;
     private bool _wasOnGround;
-    private bool _isDashing;
+    private bool _isVerticallyDashing;
+    private bool _isHorizontallyDashing;
     private bool _doubleJump;
     private bool _isFacingRight = true;
-    private bool _canDash = true;
+    private bool _canHorizontalDash = true;
+    private bool _canVerticalDash = true;
     private float _horizontal;
     private float _speed = 6f;
     private float _jumpingPower = 6f;
-    private float _dashDistance = 15f;
+    private float _dashDistanceX = 15f;
+    private float _dashDistanceY = 7f;
     private float _doubleTapTime;
-    private float _dashingTime = 0.2f;
-    private float _dashingCooldown = 1f;
+    private float _dashingTimeV = 0.2f;
+    private float _dashingTimeH = 0.2f;
+    private float _dashingHorizontalCooldown = 1f;
+    private float _dashingVerticalCooldown = 1f;
     private enum _movementState {idle, running, jummping, falling, attack}
 
     public ParticleSystem ImpactEffect;
@@ -38,6 +43,7 @@ public class PlayerMovement1 : MonoBehaviour
     public ParticleSystem Dust;
     public ParticleSystem JumpDust;
     public ParticleSystem DashDust;
+    public Ghost Ghost;
 
     KeyCode lastKeyCode;
 
@@ -125,116 +131,39 @@ public class PlayerMovement1 : MonoBehaviour
        {
            _dustEmission.rateOverTime = 0f;
        }
-        //Dashing Left
-       if (Input.GetKeyDown(KeyCode.A) && _canHorizontalDash)
-
-    //Player dash calling.
 
         //Dashing left.
-       if (Input.GetKeyDown(KeyCode.A) && _canDash)
+       if (Input.GetKeyDown(KeyCode.A) && _canHorizontalDash)
        {
 
         if (_doubleTapTime > Time.time && lastKeyCode == KeyCode.A)
-        {
-            StartCoroutine(DashHorizontal(-1f));
-        }
-        else
-        {
-            _doubleTapTime = Time.time + 0.5f;
-        }
+            {
+                StartCoroutine(DashHorizontal(-1f));
+            }
+            else
+            {
+                _doubleTapTime = Time.time + 0.5f;
+            }
 
-        lastKeyCode = KeyCode.A;
+            lastKeyCode = KeyCode.A;
        }
-        //Dashing Right
+
        if (Input.GetKeyDown(KeyCode.D) && _canHorizontalDash)
        {
 
-        //Dashing right.
-       if (Input.GetKeyDown(KeyCode.D) && _canHorizontalDash)
-       {
         if (_doubleTapTime > Time.time && lastKeyCode == KeyCode.D)
-        {
-            StartCoroutine(DashHorizontal(1f));
-        }
+            {
+                StartCoroutine(DashHorizontal(1f));
+            }
+            else
+            {
+                _doubleTapTime = Time.time + 0.5f;
+            }
 
-        else
-        {
-            _doubleTapTime = Time.time + 0.5f;
-        }
-        lastKeyCode = KeyCode.D;
+            lastKeyCode = KeyCode.D;
        }
-
-        //Dash left V2.
-        if (Input.GetKeyDown(KeyCode.LeftArrow) && _canDash)
-        {
-        if (_doubleTapTime > Time.time && lastKeyCode == KeyCode.LeftArrow)
-        {
-            StartCoroutine(DashHorizontal(-1f));
-        }
-
-        else
-        {
-            _doubleTapTime = Time.time + 0.5f;
-        }
-        lastKeyCode = KeyCode.LeftArrow;
-
-       }
-        //Dashing Right
-       if (Input.GetKeyDown(KeyCode.RightArrow) && _canHorizontalDash)
-       {
-
-
-        lastKeyCode = KeyCode.LeftArrow;
-       }
-
-        //Dashing right V2.
-       if (Input.GetKeyDown(KeyCode.RightArrow) && _canDash)
-       {
-        if (_doubleTapTime > Time.time && lastKeyCode == KeyCode.RightArrow)
-        {
-            StartCoroutine(DashHorizontal(1f));
-        }
-
-        else
-        {
-            _doubleTapTime = Time.time + 0.5f;
-        }
-        lastKeyCode = KeyCode.RightArrow;
-       }
-
-       //Dashing Up
-       if (Input.GetKeyDown("up") && _canVerticalDash)
-       {
-
-        if (doubleTapTime > Time.time)
-        {
-            StartCoroutine(DashVertical(1f));
-        }
-
-        else
-        {
-            _doubleTapTime = Time.time + 0.5f;
-        }
-
-        lastKeyCode = KeyCode.RightArrow;
-       }
-
-       //Dash Down
-       if (Input.GetKeyDown("down") && _canVerticalDash)
-       {
-
-        if (doubleTapTime > Time.time)
-        {
-            StartCoroutine(DashVertical(-1f));
-        }
-        else
-        {
-            doubleTapTime = Time.time + 0.5f;
-        }
-
-       }
-        lastKeyCode = KeyCode.RightArrow;
-       }
+        
+       
 
         //Update player animations and flip the player sprite.
         UpdateAnimationState();
@@ -244,7 +173,7 @@ public class PlayerMovement1 : MonoBehaviour
     // Fixed update is called multiple times per frame.
         private void FixedUpdate()
     {
-        if (!_isDashing)
+        if (!_isVerticallyDashing || !_isHorizontallyDashing)
         {
         _rb.velocity = new Vector2(_horizontal * _speed, _rb.velocity.y);
         _rb.gravityScale = 1f;
@@ -305,40 +234,40 @@ public class PlayerMovement1 : MonoBehaviour
 
     IEnumerator DashHorizontal (float directionX)
     {
-        canHorizontalDash = false;
-        isDashing = true;
-        rb.velocity = new Vector2(rb.velocity.x, 0f);
-        rb.AddForce(new Vector2(dashDistanceX * directionX, 0f), ForceMode2D.Impulse);
-        float gravity = rb.gravityScale;
-        rb.gravityScale = 0f;
-        dashDust.Play();
-        ghost.makeGhost = true;
+        _canHorizontalDash = false;
+        _isHorizontallyDashing = true;
+        _rb.velocity = new Vector2(_rb.velocity.x, 0f);
+        _rb.AddForce(new Vector2(_dashDistanceX * directionX, 0f), ForceMode2D.Impulse);
+        float gravity = _rb.gravityScale;
+        _rb.gravityScale = 0f;
+        DashDust.Play();
+        Ghost.makeGhost = true;
         yield return new WaitForSeconds(0.3f);
-        isDashing = false;
-        rb.gravityScale = gravity;
-        dashDust.Stop();
-        ghost.makeGhost = false;
-        yield return new WaitForSeconds(dashingHorizontalCooldown);
-        canHorizontalDash = true;
+        _isHorizontallyDashing = false;
+        _rb.gravityScale = gravity;
+        DashDust.Stop();
+        Ghost.makeGhost = false;
+        yield return new WaitForSeconds(_dashingHorizontalCooldown);
+        _canHorizontalDash = true;
     }
 
     // Dash preferences.
     IEnumerator DashVertical(float directionY)
     {
-        canVerticalDash = false;
-        isDashing = true;
-        rb.velocity = new Vector2(0f, rb.velocity.y);
-        rb.AddForce(new Vector2(0f, dashDistanceY * directionY), ForceMode2D.Impulse);
-        float gravity = rb.gravityScale;
-        rb.gravityScale = 0f;
-        dashDust.Play();
-        ghost.makeGhost = true;
+        _canVerticalDash = false;
+        _isVerticallyDashing = true;
+        _rb.velocity = new Vector2(0f, _rb.velocity.y);
+        _rb.AddForce(new Vector2(0f, _dashDistanceY * directionY), ForceMode2D.Impulse);
+        float gravity = _rb.gravityScale;
+        _rb.gravityScale = 0f;
+        DashDust.Play();
+        Ghost.makeGhost = true;
         yield return new WaitForSeconds(0.3f);
-        isDashing = false;
-        rb.gravityScale = gravity;
-        dashDust.Stop();
-        ghost.makeGhost = false;
-        yield return new WaitForSeconds(dashingVerticalCooldown);
-        canVerticalDash = true;
+        _isVerticallyDashing = false;
+        _rb.gravityScale = gravity;
+        DashDust.Stop();
+        Ghost.makeGhost = false;
+        yield return new WaitForSeconds(_dashingVerticalCooldown);
+        _canVerticalDash = true;
     }
 }
