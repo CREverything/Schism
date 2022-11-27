@@ -4,11 +4,11 @@ using UnityEngine;
 
 public class PlayerMovement1 : MonoBehaviour
 {
-    
-    [SerializeField] private LayerMask jumpableGround;
-    [SerializeField] private float moveSpeed = 7f; 
-    [SerializeField] private float jumpForce = 5f; 
-   
+
+    [SerializeField] private LayerMask _jumpableGround;
+    [SerializeField] private float _moveSpeed = 7f;
+    [SerializeField] private float _jumpForce = 5f;
+
     private Rigidbody2D rb;
     private Animator anim;
     private SpriteRenderer spr;
@@ -22,9 +22,10 @@ public class PlayerMovement1 : MonoBehaviour
     public ParticleSystem dashDust;
     private ParticleSystem.EmissionModule dustEmission;
     public ParticleSystem impactEffect;
+    public Ghost ghost;
 
     private bool isGrounded;
-    private bool Attack; 
+    private bool Attack;
     private bool wasOnGround;
     private bool isDashing;
     private bool doubleJump;
@@ -41,153 +42,206 @@ public class PlayerMovement1 : MonoBehaviour
     private float dashingHorizontalCooldown = 1f;
     private float dashingVerticalCooldown = 1f;
 
-    KeyCode lastKeyCode;
-    
+    private Rigidbody2D _rb;
+    private Animator _animator;
+    private SpriteRenderer _spr;
+    private BoxCollider2D _coll;
+    private ParticleSystem.EmissionModule _dustEmission;
+    private bool _isGrounded;
+    private bool _attack;
+    private bool _wasOnGround;
+    private bool _isDashing;
+    private bool _doubleJump;
+    private bool _isFacingRight = true;
+    private bool _canHorizontalDash = true;
+    private bool _canVerticalDash = true;
+    private float _horizontal;
+    private float _speed = 6f;
+    private float _jumpingPower = 6f;
+    private float _dashDistance = 15f;
+    private float _doubleTapTime;
+    private float _dashingTime = 0.2f;
+    private float _dashingCooldown = 1f;
+    private enum _movementState {idle, running, jummping, falling, attack}
 
-    private enum MovementState {idle, running, jummping, falling, attack}
+    public ParticleSystem ImpactEffect;
+    public AudioSource Source1;
+    public AudioClip Clip1;
+    public AudioSource Source2;
+    public AudioClip Clip2;
+    public ParticleSystem Dust;
+    public ParticleSystem JumpDust;
+    public ParticleSystem DashDust;
+        KeyCode lastKeyCode;
 
-     private void Start()
+    // Start is called before the first frame update.
+    private void Start()
     {
-        jumpForce = 7f;
-        rb =  GetComponent<Rigidbody2D>();
-        anim =  GetComponent<Animator>();
-        coll = GetComponent<BoxCollider2D>();
-        spr = GetComponent<SpriteRenderer>();
-        Attack = false;
-        source1 = GetComponent<AudioSource>();
-        clip1 = GetComponent<AudioClip>();
-        
-        dashDust.Stop();
+        _jumpForce = 7f;
+        _rb =  GetComponent<Rigidbody2D>();
+        _animator =  GetComponent<Animator>();
+        _coll = GetComponent<BoxCollider2D>();
+        _spr = GetComponent<SpriteRenderer>();
+        _attack = false;
+        Source1 = GetComponent<AudioSource>();
+        Clip1 = GetComponent<AudioClip>();
 
-        dustEmission = dust.emission;
-
+        DashDust.Stop();
+        _dustEmission = Dust.emission;
     }
 
-    // Update is called once per frame
+    // Update is called once per frame.
     private void Update(){
-        
+
+        // Set double jump to false if the player is not grounded.
         if (IsGrounded() && !Input.GetButton("Jump"))
         {
-            doubleJump = false;
+            _doubleJump = false;
         }
 
-        horizontal = Input.GetAxisRaw("Horizontal");
+        // Horizontal player movement.
+        _horizontal = Input.GetAxisRaw("Horizontal");
 
+        // Double jump functionality.
          if (Input.GetButtonDown("Jump"))
         {
-
-            if (IsGrounded() || doubleJump)
+            if (IsGrounded() || _doubleJump)
             {
-                rb.velocity = new Vector2(rb.velocity.x, jumpingPower);
-                doubleJump = !doubleJump;
-                jumpDust.Play();
+                _rb.velocity = new Vector2(_rb.velocity.x, _jumpingPower);
+                _doubleJump = !_doubleJump;
+
+                //Dust effects.
+                JumpDust.Play();
             }
         }
 
-        if (Input.GetButtonUp("Jump") && rb.velocity.y > 0f)
+        // Jump functionality.
+        if (Input.GetButtonUp("Jump") && _rb.velocity.y > 0f)
         {
-            rb.velocity = new Vector2(rb.velocity.x, rb.velocity.y * 0.5f);
+            _rb.velocity = new Vector2(_rb.velocity.x, _rb.velocity.y * 0.5f);
         }
-        
+
+        // Recieving attack inputs.
         if (Input.GetKeyDown("x"))
         {
-            Attack = true;
+            _attack = true;
         }
-        
-        else 
+
+        else
         {
-            Attack = false;
+            _attack = false;
         }
 
-         if (rb.velocity.x > 0f && IsGrounded())
+        // Footstep sound effects.
+        if (_rb.velocity.x > 0f && IsGrounded())
         {
-          
-            source1.enabled = true;
-
+            Source1.enabled = true;
         }
 
-        else if (rb.velocity.x < 0 && IsGrounded()) 
+        else if (_rb.velocity.x < 0 && IsGrounded())
         {
-            
-            source1.enabled = true;
-
+            Source1.enabled = true;
         }
 
-        else 
+        else
         {
-            source1.enabled = false;
+            Source1.enabled = false;
         }
-        
-          if(Input.GetAxisRaw("Horizontal") != 0 && IsGrounded())
+
+        // Walking dust effects.
+        if(Input.GetAxisRaw("Horizontal") != 0 && IsGrounded())
        {
-           dustEmission.rateOverTime = 35f;
-       } else
+           _dustEmission.rateOverTime = 35f;
+       }
+
+       else
        {
-           dustEmission.rateOverTime = 0f; 
+           _dustEmission.rateOverTime = 0f;
        }
         //Dashing Left
-       if (Input.GetKeyDown(KeyCode.A) && canHorizontalDash)
+       if (Input.GetKeyDown(KeyCode.A) && _canHorizontalDash)
+
+    //Player dash calling.
+
+        //Dashing left.
+       if (Input.GetKeyDown(KeyCode.A) && _canHorizontalDash)
        {
 
-        if (doubleTapTime > Time.time && lastKeyCode == KeyCode.A)
+        if (_doubleTapTime > Time.time && lastKeyCode == KeyCode.A)
         {
             StartCoroutine(DashHorizontal(-1f));
         }
         else
         {
-            doubleTapTime = Time.time + 0.5f;
+            _doubleTapTime = Time.time + 0.5f;
         }
-        lastKeyCode = KeyCode.A;
 
+        lastKeyCode = KeyCode.A;
        }
         //Dashing Right
-       if (Input.GetKeyDown(KeyCode.D) && canHorizontalDash)
+       if (Input.GetKeyDown(KeyCode.D) && _canHorizontalDash)
        {
 
-        if (doubleTapTime > Time.time && lastKeyCode == KeyCode.D)
+        //Dashing right.
+       if (Input.GetKeyDown(KeyCode.D) && _canHorizontalDash)
+       {
+        if (_doubleTapTime > Time.time && lastKeyCode == KeyCode.D)
         {
             StartCoroutine(DashHorizontal(1f));
         }
+
         else
         {
-            doubleTapTime = Time.time + 0.5f;
+            _doubleTapTime = Time.time + 0.5f;
         }
         lastKeyCode = KeyCode.D;
        }
         //Dash Left
-        if (Input.GetKeyDown(KeyCode.LeftArrow) && canHorizontalDash)
+        if (Input.GetKeyDown(KeyCode.LeftArrow) && _canHorizontalDash)
+
+        //Dash left V2.
+        if (Input.GetKeyDown(KeyCode.LeftArrow) && _canHorizontalDash)
         {
-        if (doubleTapTime > Time.time && lastKeyCode == KeyCode.LeftArrow)
+        if (_doubleTapTime > Time.time && lastKeyCode == KeyCode.LeftArrow)
         {
             StartCoroutine(DashHorizontal(-1f));
         }
+
         else
         {
-            doubleTapTime = Time.time + 0.5f;
+            _doubleTapTime = Time.time + 0.5f;
         }
         lastKeyCode = KeyCode.LeftArrow;
-        
+
        }
         //Dashing Right
-       if (Input.GetKeyDown(KeyCode.RightArrow) && canHorizontalDash)
+       if (Input.GetKeyDown(KeyCode.RightArrow) && _canHorizontalDash)
        {
 
-        if (doubleTapTime > Time.time && lastKeyCode == KeyCode.RightArrow)
+
+        lastKeyCode = KeyCode.LeftArrow;
+       }
+
+        //Dashing right V2.
+       if (Input.GetKeyDown(KeyCode.RightArrow) && _canHorizontalDash)
+       {
+        if (_doubleTapTime > Time.time && lastKeyCode == KeyCode.RightArrow)
         {
             StartCoroutine(DashHorizontal(1f));
         }
+
         else
         {
-            doubleTapTime = Time.time + 0.5f;
+            _doubleTapTime = Time.time + 0.5f;
         }
         lastKeyCode = KeyCode.RightArrow;
        }
 
        //Dashing Up
-       if (Input.GetKeyDown(KeyCode.UpArrow) && canVerticalDash)
+       if (Input.GetKeyDown("up") && _canVerticalDash)
        {
 
-        if (doubleTapTime > Time.time && lastKeyCode == KeyCode.UpArrow)
+        if (doubleTapTime > Time.time)
         {
             StartCoroutine(DashVertical(1f));
         }
@@ -195,75 +249,97 @@ public class PlayerMovement1 : MonoBehaviour
         {
             doubleTapTime = Time.time + 0.5f;
         }
-        lastKeyCode = KeyCode.UpArrow;
+
        }
 
+       //Dash Down
+       if (Input.GetKeyDown("down") && _canVerticalDash)
+       {
 
+        if (doubleTapTime > Time.time)
+        {
+            StartCoroutine(DashVertical(-1f));
+        }
+        else
+        {
+            doubleTapTime = Time.time + 0.5f;
+        }
+
+       }
+        lastKeyCode = KeyCode.RightArrow;
+       }
+
+        //Update player animations and flip the player sprite.
         UpdateAnimationState();
-        
         Flip();
-
-
    }
-    
+
+    // Fixed update is called multiple times per frame.
         private void FixedUpdate()
     {
         if (!isDashing || !isDashing){
         rb.velocity = new Vector2(horizontal * speed, rb.velocity.y);
         rb.gravityScale = 1f;
+        if (!_isDashing)
+        {
+        _rb.velocity = new Vector2(_horizontal * _speed, _rb.velocity.y);
+        _rb.gravityScale = 1f;
         }
     }
+    }
 
+    // Flip player sprite based on directional orientation.
     private void Flip()
     {
-        if (isFacingRight && horizontal < 0f || !isFacingRight && horizontal > 0f)
+        if (_isFacingRight && _horizontal < 0f || !_isFacingRight && _horizontal > 0f)
         {
             Vector3 localScale = transform.localScale;
-            isFacingRight = !isFacingRight;
+            _isFacingRight = !_isFacingRight;
             localScale.x *= -1f;
             transform.localScale = localScale;
         }
     }
+
+    // Update player's animation state.
     private void UpdateAnimationState()
         {
+            _movementState state;
 
-            MovementState state;
-
-        if (rb.velocity.x > 0f)
+        if (_rb.velocity.x > 0f)
         {
-            state = MovementState.running;
+            state = _movementState.running;
         }
 
-        else if (rb.velocity.x < 0) 
+        else if (_rb.velocity.x < 0)
         {
-            state = MovementState.running;            
+            state = _movementState.running;
         }
 
-        else 
+        else
         {
-            state = MovementState.idle;  
-        }
-        
-        if (rb.velocity.y > .1f)
-        {
-            state = MovementState.jummping;
+            state = _movementState.idle;
         }
 
-        else if (rb.velocity.y < - .1f)
+        if (_rb.velocity.y > .1f)
         {
-            state = MovementState.falling;
+            state = _movementState.jummping;
         }
-        
 
-        anim.SetInteger("state", (int)state);
-        
+        else if (_rb.velocity.y < - .1f)
+        {
+            state = _movementState.falling;
+        }
+
+        _animator.SetInteger("state", (int)state);
     }
+
+    // Boolean variable to check if the player is grounded.
     private bool IsGrounded()
     {
-        return Physics2D.BoxCast(coll.bounds.center, coll.bounds.size, 0f, Vector2.down, .1f, jumpableGround);
+        return Physics2D.BoxCast(_coll.bounds.center, _coll.bounds.size, 0f, Vector2.down, .1f, _jumpableGround);
     }
 
-    IEnumerator DashHorizontal (float directionX) 
+    IEnumerator DashHorizontal (float directionX)
     {
         canHorizontalDash = false;
         isDashing = true;
@@ -272,16 +348,18 @@ public class PlayerMovement1 : MonoBehaviour
         float gravity = rb.gravityScale;
         rb.gravityScale = 0f;
         dashDust.Play();
-        yield return new WaitForSeconds(0.2f);
+        ghost.makeGhost = true;
+        yield return new WaitForSeconds(0.3f);
         isDashing = false;
         rb.gravityScale = gravity;
         dashDust.Stop();
+        ghost.makeGhost = false;
         yield return new WaitForSeconds(dashingHorizontalCooldown);
         canHorizontalDash = true;
-
-
     }
-    IEnumerator DashVertical (float directionY) 
+
+    // Dash preferences.
+    IEnumerator DashVertical(float directionY)
     {
         canVerticalDash = false;
         isDashing = true;
@@ -290,12 +368,15 @@ public class PlayerMovement1 : MonoBehaviour
         float gravity = rb.gravityScale;
         rb.gravityScale = 0f;
         dashDust.Play();
-        yield return new WaitForSeconds(0.2f);
+        ghost.makeGhost = true;
+        yield return new WaitForSeconds(0.3f);
         isDashing = false;
         rb.gravityScale = gravity;
         dashDust.Stop();
+        ghost.makeGhost = false;
         yield return new WaitForSeconds(dashingVerticalCooldown);
         canVerticalDash = true;
     }
 }
+
 

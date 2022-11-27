@@ -4,24 +4,24 @@ using UnityEngine;
 
 public class BetterPlayerJump : MonoBehaviour
 {
-
-    public float fallMultiplier = 2.5f;
-    public float lowJumpMultiplier = 2f;
+    public float FallMultiplier = 2.5f;
+    public float LowJumpMultiplier = 2f;
 
     Rigidbody2D rb;
 
-    // Start is called before the first frame update
+    // Start is called before the first frame update.
     void Awake()
     {
         rb = GetComponent<Rigidbody2D>();
     }
 
-    // Update is called once per frame
+    // Update is called once per frame.
     void Update()
     {
+        // Increases gravity scale when Rigid Body is falling downwards.
         if(rb.velocity.y < 0)
         {
-            rb.velocity += Vector2.up * Physics2D.gravity * (fallMultiplier - 1) * Time.deltaTime;
+            rb.velocity += Vector2.up * Physics2D.gravity * (FallMultiplier - 1) * Time.deltaTime;
         }
     }
 }
