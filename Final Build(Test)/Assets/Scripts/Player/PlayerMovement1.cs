@@ -17,14 +17,19 @@ public class PlayerMovement1 : MonoBehaviour
     private Vector2 _dashingDir;
     public ParticleSystem ImpactEffect;
     public AudioSource Source1;
+    public AudioClip Clip3;
+    public AudioClip Clip2;
     public AudioClip Clip1;
     public AudioSource Source2;
-    public AudioClip Clip2;
+    public AudioSource Source3;
     public ParticleSystem Dust;
     public ParticleSystem JumpDust;
     public ParticleSystem DashDust;
     public Ghost Ghost;
-    
+    public bool IsLoaded;
+    public Player player;
+    public float OriginalGravity;
+
     private bool _isGrounded;
     private bool _attack;
     private bool _wasOnGround;
@@ -51,7 +56,7 @@ public class PlayerMovement1 : MonoBehaviour
         _spr = GetComponent<SpriteRenderer>();
         _attack = false;
         Source1 = GetComponent<AudioSource>();
-        Clip1 = GetComponent<AudioClip>();
+        Source2 = GetComponent<AudioSource>();
 
         DashDust.Stop();
         _dustEmission = Dust.emission;
@@ -60,10 +65,7 @@ public class PlayerMovement1 : MonoBehaviour
     // Update is called once per frame.
     private void Update(){
 
-        if (_isDashing)
-        {
-            return;
-        }
+        Source1.volume = Random.Range(0f,0.5f);
 
         // Set double jump to false if the player is not grounded.
         if (IsGrounded() && !Input.GetButton("Jump"))
@@ -88,7 +90,7 @@ public class PlayerMovement1 : MonoBehaviour
         }
 
         // Jump functionality.
-        if (Input.GetButtonUp("Jump") && _rb.velocity.y > 0f)
+        if (Input.GetButtonUp("Jump") && _rb.velocity.y > 0f && !_isDashing)
         {
             _rb.velocity = new Vector2(_rb.velocity.x, _rb.velocity.y * 0.5f);
         }
@@ -133,7 +135,20 @@ public class PlayerMovement1 : MonoBehaviour
 
          if (Input.GetKeyDown(KeyCode.LeftShift) && _canDash)
         {
-            StartCoroutine(Dash());
+            _isDashing = true;
+            _canDash = false;
+            _dashingDir = new Vector2(_horizontal, Input.GetAxis("Vertical"));
+
+            if (_dashingDir == Vector2.zero)
+            {
+                _dashingDir = new Vector2(transform.localScale.x, 0);
+            }
+
+                OriginalGravity = _rb.gravityScale;
+                Ghost.makeGhost = true;
+
+            StartCoroutine(StopDashing());
+
         }
 
         //Update player animations and flip the player sprite.
@@ -146,8 +161,9 @@ public class PlayerMovement1 : MonoBehaviour
     {
         if (_isDashing)
         {
-            return;
+            _rb.velocity = _dashingDir.normalized * _dashingPower;
         }
+
         _rb.velocity = new Vector2(_horizontal * _speed, _rb.velocity.y);
         _rb.gravityScale = 1f;
     }
@@ -203,21 +219,21 @@ public class PlayerMovement1 : MonoBehaviour
         return Physics2D.BoxCast(_coll.bounds.center, _coll.bounds.size, 0f, Vector2.down, .1f, _jumpableGround);
     }
 
-   private IEnumerator Dash()
+   private IEnumerator StopDashing()
     {
-        _canDash = false;
-        _isDashing = true;
-        float originalGravity = _rb.gravityScale;
-        _rb.gravityScale = 0f;
-        _rb.velocity = new Vector2(transform.localScale.x * _dashingPower, 0f);
-        DashDust.Play();
-        Ghost.makeGhost = true;
-        yield return new WaitForSeconds(_dashingTime);
-        _rb.gravityScale = originalGravity;
+         yield return new WaitForSeconds(_dashingTime);
         _isDashing = false;
-        DashDust.Stop();
-        Ghost.makeGhost = false;
+        _rb.velocity = Vector2.zero;
+         _canDash = false;
+        _rb.gravityScale = OriginalGravity;
+         Ghost.makeGhost = false;
+
         yield return new WaitForSeconds(_dashingCooldown);
         _canDash = true;
     }
+    // Loads the game.
+    public void LoadGame()
+   {
+       IsLoaded = true;
+   }
 }

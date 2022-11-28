@@ -7,8 +7,9 @@ public class PlayerDeath : MonoBehaviour
 {
     private Rigidbody2D _rb;
     private Animator _animator;
+    [SerializeField]private AudioSource _source;
+    private bool _isDead;
 
-    public AudioSource Source;
     public AudioClip Clip;
 
     // Start is called before the first frame update.
@@ -27,12 +28,27 @@ public class PlayerDeath : MonoBehaviour
         }
     }
 
+    // Update is called before every frame.
+    private void Update()
+    {
+        // Play death sound.
+        if(_isDead)
+        {
+            _source.Play();
+
+            if(!_source.isPlaying)
+            {
+                _isDead = false;
+            }
+        }
+    }
+
     // Player death animation and restart.
     private void Die()
     {
-        Source.PlayOneShot(Clip);
         _rb.bodyType = RigidbodyType2D.Static;
         RestartLevel();
+        _isDead = true;
     }
 
     // Restart level functionality.
