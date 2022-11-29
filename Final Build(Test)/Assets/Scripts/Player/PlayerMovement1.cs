@@ -8,13 +8,14 @@ public class PlayerMovement1 : MonoBehaviour
     [SerializeField] private LayerMask _jumpableGround;
     [SerializeField] private float _moveSpeed = 7f;
     [SerializeField] private float _jumpForce = 5f;
+    [SerializeField]private float _dashingPower = 12f;
+    [SerializeField]private float _dashingTime = 0.2f;
 
     private Rigidbody2D _rb;
     private Animator _animator;
     private SpriteRenderer _spr;
     private BoxCollider2D _coll;
     private ParticleSystem.EmissionModule _dustEmission;
-    private Vector2 _dashingDir;
     public ParticleSystem ImpactEffect;
     public AudioSource Source1;
     public AudioClip Clip3;
@@ -38,11 +39,10 @@ public class PlayerMovement1 : MonoBehaviour
     private float _horizontal;
     private float _speed = 6f;
     private float _jumpingPower = 6f;
+
     private bool _canDash = true;
     private bool _isDashing;
-    private float _dashingPower = 12f;
-    private float _dashingTime = 0.2f;
-    private float _dashingCooldown = 1f;
+     private Vector2 _dashingDir;
 
     KeyCode lastKeyCode;
     private enum _movementState {idle, running, jummping, falling, attack}
@@ -137,7 +137,7 @@ public class PlayerMovement1 : MonoBehaviour
         {
             _isDashing = true;
             _canDash = false;
-            _dashingDir = new Vector2(_horizontal, Input.GetAxis("Vertical"));
+            _dashingDir = new Vector2(_horizontal, Input.GetAxisRaw("Vertical"));
 
             if (_dashingDir == Vector2.zero)
             {
@@ -151,6 +151,17 @@ public class PlayerMovement1 : MonoBehaviour
 
         }
 
+        if (_isDashing)
+        {
+            _rb.velocity = _dashingDir.normalized * _dashingPower;
+            return;
+        }
+
+        if(IsGrounded())
+        {
+            _canDash = true;
+        }
+
         //Update player animations and flip the player sprite.
         UpdateAnimationState();
         Flip();
@@ -159,12 +170,10 @@ public class PlayerMovement1 : MonoBehaviour
     // Fixed update is called multiple times per frame.
         private void FixedUpdate()
     {
-        if (_isDashing)
+        if(!_isDashing)
         {
-            _rb.velocity = _dashingDir.normalized * _dashingPower;
+            _rb.velocity = new Vector2(_horizontal * _speed, _rb.velocity.y);
         }
-
-        _rb.velocity = new Vector2(_horizontal * _speed, _rb.velocity.y);
         _rb.gravityScale = 1f;
     }
 
@@ -227,9 +236,6 @@ public class PlayerMovement1 : MonoBehaviour
          _canDash = false;
         _rb.gravityScale = OriginalGravity;
          Ghost.makeGhost = false;
-
-        yield return new WaitForSeconds(_dashingCooldown);
-        _canDash = true;
     }
     // Loads the game.
     public void LoadGame()
