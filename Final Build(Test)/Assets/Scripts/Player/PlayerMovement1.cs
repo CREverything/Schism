@@ -18,11 +18,9 @@ public class PlayerMovement1 : MonoBehaviour
     private ParticleSystem.EmissionModule _dustEmission;
     public ParticleSystem ImpactEffect;
     public AudioSource Source1;
-    public AudioClip Clip3;
     public AudioClip Clip2;
     public AudioClip Clip1;
     public AudioSource Source2;
-    public AudioSource Source3;
     public ParticleSystem Dust;
     public ParticleSystem JumpDust;
     public ParticleSystem DashDust;
@@ -143,15 +141,13 @@ public class PlayerMovement1 : MonoBehaviour
             {
                 _dashingDir = new Vector2(transform.localScale.x, 0);
             }
-
-                OriginalGravity = _rb.gravityScale;
                 Ghost.makeGhost = true;
 
             StartCoroutine(StopDashing());
 
         }
 
-        if (_isDashing)
+        if (_isDashing && Input.GetAxis("Horizontal")!=0 || _isDashing && Input.GetAxis("Vertical")!=0)
         {
             _rb.velocity = _dashingDir.normalized * _dashingPower;
             return;
@@ -233,9 +229,8 @@ public class PlayerMovement1 : MonoBehaviour
          yield return new WaitForSeconds(_dashingTime);
         _isDashing = false;
         _rb.velocity = Vector2.zero;
-         _canDash = false;
-        _rb.gravityScale = OriginalGravity;
-         Ghost.makeGhost = false;
+        _canDash = false;
+        Ghost.makeGhost = false;
     }
     // Loads the game.
     public void LoadGame()
