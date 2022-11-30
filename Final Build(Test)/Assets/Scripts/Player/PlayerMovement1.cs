@@ -170,6 +170,7 @@ public class PlayerMovement1 : MonoBehaviour
         if(!_isDashing)
         {
             _rb.velocity = new Vector2(_horizontal * _speed, _rb.velocity.y);
+            return;
         }
     }
 
@@ -190,14 +191,14 @@ public class PlayerMovement1 : MonoBehaviour
         {
             _movementState state;
 
-        if (_rb.velocity.x > 0f)
+        if (_horizontal != 0 && IsGrounded())
         {
             state = _movementState.running;
         }
 
-        else if (_rb.velocity.x < 0)
+        else if(_horizontal == 0 && IsGrounded())
         {
-            state = _movementState.running;
+            state = _movementState.idle;
         }
 
         else
