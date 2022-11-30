@@ -34,12 +34,12 @@ public class PlayerDeath : MonoBehaviour
         // Play death sound.
         if(_isDead)
         {
-            _source.Play();
+            // _source.Play();
 
-            if(!_source.isPlaying)
-            {
-                _isDead = false;
-            }
+            // if(!_source.isPlaying)
+            // {
+            //     _isDead = false;
+            // }
         }
     }
 

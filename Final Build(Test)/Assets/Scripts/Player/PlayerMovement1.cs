@@ -141,6 +141,7 @@ public class PlayerMovement1 : MonoBehaviour
             {
                 _dashingDir = new Vector2(transform.localScale.x, 0);
             }
+
                 Ghost.makeGhost = true;
 
             StartCoroutine(StopDashing());
@@ -170,7 +171,6 @@ public class PlayerMovement1 : MonoBehaviour
         {
             _rb.velocity = new Vector2(_horizontal * _speed, _rb.velocity.y);
         }
-        _rb.gravityScale = 1f;
     }
 
     // Flip player sprite based on directional orientation.
