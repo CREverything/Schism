@@ -142,7 +142,6 @@ public class PlayerMovement1 : MonoBehaviour
                 _dashingDir = new Vector2(transform.localScale.x, 0);
             }
 
-                Ghost.makeGhost = true;
 
             StartCoroutine(StopDashing());
 
@@ -150,6 +149,7 @@ public class PlayerMovement1 : MonoBehaviour
 
         if (_isDashing && Input.GetAxis("Horizontal")!=0 || _isDashing && Input.GetAxis("Vertical")!=0)
         {
+            Ghost.makeGhost = true;
             _rb.velocity = _dashingDir.normalized * _dashingPower;
             return;
         }
