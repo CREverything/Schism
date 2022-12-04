@@ -56,8 +56,8 @@ public class PlayerMovement1 : MonoBehaviour
         Source1 = GetComponent<AudioSource>();
         Source2 = GetComponent<AudioSource>();
 
-        DashDust.Stop();
-        _dustEmission = Dust.emission;
+        //DashDust.Stop();
+        //_dustEmission = Dust.emission;
     }
 
     // Update is called once per frame.
@@ -83,7 +83,7 @@ public class PlayerMovement1 : MonoBehaviour
                 _doubleJump = !_doubleJump;
 
                 //Dust effects.
-                JumpDust.Play();
+                //JumpDust.Play();
             }
         }
 
@@ -123,12 +123,12 @@ public class PlayerMovement1 : MonoBehaviour
         // Walking dust effects.
         if(Input.GetAxisRaw("Horizontal") != 0 && IsGrounded())
        {
-           _dustEmission.rateOverTime = 35f;
+           //_dustEmission.rateOverTime = 35f;
        }
 
        else
        {
-           _dustEmission.rateOverTime = 0f;
+           //_dustEmission.rateOverTime = 0f;
        }
 
          if (Input.GetKeyDown(KeyCode.LeftShift) && _canDash)
@@ -160,7 +160,7 @@ public class PlayerMovement1 : MonoBehaviour
         }
 
         //Update player animations and flip the player sprite.
-        UpdateAnimationState();
+        //UpdateAnimationState();
         Flip();
    }
 
@@ -187,7 +187,7 @@ public class PlayerMovement1 : MonoBehaviour
     }
 
     // Update player's animation state.
-    private void UpdateAnimationState()
+    /*private void UpdateAnimationState()
         {
             _movementState state;
 
@@ -218,7 +218,7 @@ public class PlayerMovement1 : MonoBehaviour
 
         _animator.SetInteger("state", (int)state);
     }
-
+*/
     // Boolean variable to check if the player is grounded.
     private bool IsGrounded()
     {
