@@ -10,7 +10,6 @@ GameObject:
   m_Component:
   - component: {fileID: 3450372582721660886}
   - component: {fileID: 4787397013905594650}
-  - component: {fileID: 1756698874341491232}
   - component: {fileID: 2737156683798494639}
   - component: {fileID: 5564657591895286535}
   - component: {fileID: 6265396079788713456}
@@ -19,7 +18,7 @@ GameObject:
   - component: {fileID: 6421010104562993178}
   m_Layer: 0
   m_Name: TransformEX 1
-  m_TagString: Untagged
+  m_TagString: Players
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -91,19 +90,6 @@ SpriteRenderer:
   m_WasSpriteAssigned: 1
   m_MaskInteraction: 0
   m_SpriteSortPoint: 0
---- !u!114 &1756698874341491232
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5626947077395811201}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c556f3d73e90ccc41b406bf0ae71df5d, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  smoothing: 5
 --- !u!50 &2737156683798494639
 Rigidbody2D:
   serializedVersion: 4
