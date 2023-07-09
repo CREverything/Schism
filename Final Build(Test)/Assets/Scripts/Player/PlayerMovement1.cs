@@ -43,7 +43,7 @@ public class PlayerMovement1 : MonoBehaviour
      private Vector2 _dashingDir;
 
     KeyCode lastKeyCode;
-    private enum _movementState {idle, running, jumping, falling, attack}
+    private enum _movementState {idle, running, jummping, falling, attack}
 
     // Start is called before the first frame update.
     private void Start()
@@ -56,8 +56,8 @@ public class PlayerMovement1 : MonoBehaviour
         Source1 = GetComponent<AudioSource>();
         Source2 = GetComponent<AudioSource>();
 
-        DashDust.Stop();
-        _dustEmission = Dust.emission;
+        //DashDust.Stop();
+        //_dustEmission = Dust.emission;
     }
 
     // Update is called once per frame.
@@ -83,7 +83,7 @@ public class PlayerMovement1 : MonoBehaviour
                 _doubleJump = !_doubleJump;
 
                 //Dust effects.
-                JumpDust.Play();
+                //JumpDust.Play();
             }
         }
 
@@ -123,12 +123,12 @@ public class PlayerMovement1 : MonoBehaviour
         // Walking dust effects.
         if(Input.GetAxisRaw("Horizontal") != 0 && IsGrounded())
        {
-           _dustEmission.rateOverTime = 35f;
+           //_dustEmission.rateOverTime = 35f;
        }
 
        else
        {
-           _dustEmission.rateOverTime = 0f;
+           //_dustEmission.rateOverTime = 0f;
        }
 
          if (Input.GetKeyDown(KeyCode.LeftShift) && _canDash)
@@ -160,7 +160,7 @@ public class PlayerMovement1 : MonoBehaviour
         }
 
         //Update player animations and flip the player sprite.
-        UpdateAnimationState();
+        //UpdateAnimationState();
         Flip();
    }
 
@@ -187,7 +187,7 @@ public class PlayerMovement1 : MonoBehaviour
     }
 
     // Update player's animation state.
-    private void UpdateAnimationState()
+    /*private void UpdateAnimationState()
         {
             _movementState state;
 
@@ -201,19 +201,24 @@ public class PlayerMovement1 : MonoBehaviour
             state = _movementState.idle;
         }
 
-        else if (_rb.velocity.y > .1f)
+        else
         {
-            state = _movementState.jumping;
+            state = _movementState.idle;
         }
 
-        else
+        if (_rb.velocity.y > .1f)
+        {
+            state = _movementState.jummping;
+        }
+
+        else if (_rb.velocity.y < - .1f)
         {
             state = _movementState.falling;
         }
 
         _animator.SetInteger("state", (int)state);
     }
-
+*/
     // Boolean variable to check if the player is grounded.
     private bool IsGrounded()
     {
